@@ -1,0 +1,17 @@
+from backend.models.explain_vo import ExplainVo
+from backend.models.parse_result_vo import ParseResultVo
+from backend.models.result_vo import ResultVo, ResultType, ResultCodeEnum
+from supporter.explainer.base_explainer import ExplainResult
+from supporter.identifier import IdentifyResult
+
+
+def identify_explains_to_result(identify_explains: list[tuple[IdentifyResult, dict[str, ExplainResult]]]) -> ResultVo:
+    parse_result_vo_list: list[ParseResultVo] = list()
+    for identify_result, explains in identify_explains:
+        explain_vo_list: list[ExplainVo] = [ExplainVo(explain.clazz, explain.content) for explain in explains.values()]
+        parse_result_vo = ParseResultVo(identify_result.clazz, identify_result.start_inclusive,
+                                        identify_result.end_exclusive, explain_vo_list)
+        parse_result_vo_list.append(parse_result_vo)
+
+    result_vo = ResultVo(ResultType.SUCCESS, parse_result_vo_list, rce=ResultCodeEnum.SUCCESS)
+    return result_vo

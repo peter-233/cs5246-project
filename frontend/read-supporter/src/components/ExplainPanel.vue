@@ -28,11 +28,13 @@ const explainSequence = {
   'definition': 1,
   'example': 2,
   'ext_link': 3,
+  'ner_label': 4,
 }
 const explainTitle = {
   'definition': 'Definition',
   'example': 'Example',
   'ext_link': 'External Link',
+  'ner_label': 'Name Entity Recognition Label',
 }
 const sortedExplains = [...props.explains]
 sortedExplains.sort((lhs, rhs) => {

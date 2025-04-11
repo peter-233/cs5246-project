@@ -1,14 +1,16 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
 import spacy.tokens
+from spacy_entity_linker.EntityElement import EntityElement
 
 
 class IdentifyResultClazz(Enum):
     HARD = "hard"
     NER = "ner"
+
 
 @dataclass
 class IdentifyResult:
@@ -17,9 +19,11 @@ class IdentifyResult:
     text: str
 
     clazz: IdentifyResultClazz
-    hard_level: Optional[float]               # activate if clazz == ResultClazz.HARD
-    token: Optional[spacy.tokens.Token]       # activate if clazz == ResultClazz.HARD
-    label: Optional[str]                      # activate if clazz == ResultClazz.NER
+    hard_level: Optional[float]  # activate if clazz == ResultClazz.HARD
+    token: Optional[spacy.tokens.Token]  # activate if clazz == ResultClazz.HARD
+    label: Optional[str]  # activate if clazz == ResultClazz.NER
+    entity: Optional[EntityElement]  # activate if clazz == ResultClazz.NER
+
 
 class BaseIdentifier(ABC):
 

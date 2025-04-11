@@ -2,12 +2,11 @@ import axios from "axios";
 import {handleMessage} from "@/api/utils.ts";
 
 const axiosIns = axios.create({
-    // baseURL: "http://localhost:8080"
-    baseURL: "http://127.0.0.1:4523/m1/6187324-5879816-default"
+    baseURL: import.meta.env.VITE_AXIOS_BASE_URL,
 })
 
 export interface Explain {
-    type: "definition" | "example" | "ext_link"
+    type: "definition" | "example" | "ext_link" | "ner_label"
     content: string
 }
 

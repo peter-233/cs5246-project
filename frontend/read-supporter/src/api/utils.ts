@@ -1,16 +1,17 @@
 export function handleMessage(type: string, msg: string) {
+    let _window = window as any;
     if(type === "success") {
-        window.$message.success(msg)
+        _window.$message.success(msg)
     } else if(type === "error") {
-        window.$message.error(msg)
+        _window.$message.error(msg)
     } else if(type === "warning") {
-        window.$message.warning(msg)
+        _window.$message.warning(msg)
     } else if(type === "info") {
-        window.$message.info(msg)
+        _window.$message.info(msg)
     } else if (type === "none") {
         // pass
     } else {
-        window.$message.error("Unknown message type: " + type)
+        _window.$message.error("Unknown message type: " + type)
         throw new Error("Unknown message type: " + type)
     }
 }
