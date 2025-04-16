@@ -46,5 +46,26 @@ export async function getParseResults(text: string) {
 
 }
 
+export async function getSummary(text: string) {
+    const resp = await axiosIns.post("/api/summary",
+        {
+            text: text
+        }
+    )
+
+    if (resp.status !== 200) {
+        handleMessage("error", `网络请求请求失败, code=${resp.status}`)
+        return;
+    }
+
+    const result = resp.data as Result
+    handleMessage(result.type, result.msg)
+    if (result.code !== 200) {
+        return;
+    }
+
+    return result.data.summary as string
+
+}
 
 

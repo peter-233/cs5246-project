@@ -12,9 +12,10 @@ class BertEmbedder(BaseEmbedder):
 
     def __init__(self):
         super().__init__()
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = BertModel.from_pretrained(
             'bert-base-uncased', cache_dir=self.RESOURCE_MODEL_ROOT
-        )
+        ).to(self.device)
         self.tokenizer = BertTokenizer.from_pretrained(
             'bert-base-uncased', cache_dir=self.RESOURCE_MODEL_ROOT
         )
@@ -22,10 +23,10 @@ class BertEmbedder(BaseEmbedder):
     def embed(self, text: str) -> dict[str, any]:
         tokens = self.tokenizer.tokenize(text)
         input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-        input_ids = torch.tensor(input_ids).unsqueeze(0)
+        input_ids = torch.tensor(input_ids).unsqueeze(0).to(self.device)
         with torch.no_grad():
             outputs = self.model(input_ids)
-            embeddings = outputs.last_hidden_state[0]
+            embeddings = outputs.last_hidden_state[0].cpu()
         result = {
             "tokens": tokens,
             "embeddings": embeddings.numpy()

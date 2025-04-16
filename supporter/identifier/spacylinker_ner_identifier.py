@@ -32,6 +32,19 @@ def get_span_idx(start_inclusive: int, end_exclusive: int, results: list[Identif
 # https://github.com/egerber/spacy-entity-linker
 class SpacyLinkerNERIdentifier(BaseIdentifier):
     nlp: spacy.Language
+    useful_labels: set[str] = {
+        "EVENT",
+        "FAC",
+        "GPE",
+        "LANGUAGE",
+        "LAW",
+        "LOC",
+        "NORP",
+        "ORG",
+        "PERSON",
+        "PRODUCT",
+        "WORK_OF_ART",
+    }
 
     def __init__(self):
         super().__init__()
@@ -62,6 +75,8 @@ class SpacyLinkerNERIdentifier(BaseIdentifier):
         identify_results, linker_results = list(), identify_results
         for ent in doc.ents:
             assert isinstance(ent, Span)
+            if ent.label_ not in self.useful_labels:
+                continue
             start_idx = doc[ent.start].idx
             end_idx = doc[ent.end - 1].idx + len(doc[ent.end - 1].text)
             idx = get_span_idx(start_idx, end_idx, linker_results)

@@ -3,8 +3,9 @@
     <n-spin :show="isLoading" style="height: 100%; width: 100%;" id="TextLabelView_Spin_0" size="large">
       <n-split direction="horizontal" style="height: 100%" :max="0.75" :min="0.5" :default-size="0.75">
         <template #1>
-          <div class="textareaLayout" id="TextLabelView_textareaLayout_0">
+          <div class="textareaLayout">
             <n-input
+                id="TextLabelView_input_0"
                 v-if="isInputMode"
                 v-model:value="article"
                 type="textarea"
@@ -54,6 +55,24 @@
                 </div>
               </n-button>
             </n-flex>
+            <n-flex vertical justify="center" align="center" style="margin: 10px 10px 10px 10px;">
+              <n-input id="TextLabelView_input_1"
+                       v-model:value="summary"
+                       type="textarea"
+                       placeholder="Summary..."
+                       round
+                       readonly
+                       :style="{
+                          'width': '100%',
+                          'height': '100%',
+                          'resize': 'none',
+                          'font-size': '25px',
+                          'font-family': `${fontFamily}`,
+                       }
+              ">
+
+              </n-input>
+            </n-flex>
           </div>
         </template>
       </n-split>
@@ -65,7 +84,7 @@
 <script setup lang="ts">
 import {ref} from 'vue'
 import titlePic from '@/assets/anime_girl.png'
-import {getParseResults} from '@/api/backend.ts'
+import {getParseResults, getSummary} from '@/api/backend.ts'
 import type {ParseResult} from '@/api/backend.ts'
 import {useMessage} from "naive-ui";
 import SingleTextSnippet from "@/components/SingleTextSnippet.vue";
@@ -76,6 +95,7 @@ _window.$message = useMessage()
 
 const isInputMode = ref(true)
 const article = ref('')
+const summary = ref('')
 const fontFamily = "Menlo, Consolas, Monaco, 'Lucida Console', 'Liberation Mono', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', 'Courier New', monospace, serif"
 const isLoading = ref(false)
 
@@ -88,12 +108,20 @@ function switchMode() {
 
 const renderedParseResults = ref<ParseResult[]>([])
 
+function reset() {
+  renderedParseResults.value = []
+  summary.value = ''
+}
 async function getRenderedText() {
   isLoading.value = true
+  reset()
   let parseResults: ParseResult[] | undefined = [];
-
+  let summaryRespText: string | undefined = ''
   try {
-    parseResults = await getParseResults(article.value)
+    [parseResults, summaryRespText] = await Promise.all([
+      getParseResults(article.value),
+      getSummary(article.value)
+    ]);
   } catch (e) {
     _window.$message.error(`Failed to get parse results: ${e}`)
     console.log(e)
@@ -101,7 +129,7 @@ async function getRenderedText() {
     return;
   }
 
-  if (!parseResults) {
+  if (!parseResults || !summaryRespText) {
     return;
   }
 
@@ -129,6 +157,7 @@ async function getRenderedText() {
     explains: [],
   })
   renderedParseResults.value = newRenderedParseResults
+  summary.value = summaryRespText
 
   isLoading.value = false
 }
@@ -136,7 +165,11 @@ async function getRenderedText() {
 </script>
 
 <style>
-#TextLabelView_textareaLayout_0 .n-input-wrapper {
+#TextLabelView_input_0 .n-input-wrapper {
+  resize: none;
+}
+
+#TextLabelView_input_1 .n-input-wrapper {
   resize: none;
 }
 
@@ -155,7 +188,7 @@ async function getRenderedText() {
 
 .gridLayout {
   display: grid;
-  grid-template-rows: 300px 1fr;
+  grid-template-rows: 220px 1fr 500px;
   width: 100%;
   height: 100%;
 }
