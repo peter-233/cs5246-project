@@ -6,10 +6,10 @@ from flask import Blueprint, request, Response
 from backend.models import ResultVo, ResultType, ResultCodeEnum
 from supporter.utils import fetch_article
 
-fetch_article_bp = Blueprint('summary', __name__)
+fetch_article_bp = Blueprint('fetch-article', __name__)
 
 
-@fetch_article_bp.route('/api/summary', methods=['GET'])
+@fetch_article_bp.route('/api/fetch-article', methods=['GET'])
 def parse_result():
     url: str = request.args.get('url')
 

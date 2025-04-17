@@ -1,5 +1,7 @@
 from pond import Pond
+
 from .pipelines_factory import pipelines_factory
+from .summarizer_factory import summarizer_factory
 
 main_pond = Pond(
     borrowed_timeout=30 * 60,
@@ -9,3 +11,4 @@ main_pond = Pond(
 )
 
 main_pond.register(pipelines_factory)
+main_pond.register(summarizer_factory)

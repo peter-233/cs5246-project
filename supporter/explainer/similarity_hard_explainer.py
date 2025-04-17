@@ -8,7 +8,7 @@ from supporter.embedder.base_embedder import BaseEmbedder
 from supporter.explainer.base_explainer import BaseExplainer, ExplainResult, ExplainResultClazz
 from supporter.identifier.base_identifier import IdentifyResult, IdentifyResultClazz
 
-from supporter.utils import POSConverter
+from supporter.utils import POSConverter2
 
 
 class SimilarityHardExplainer(BaseExplainer):
@@ -42,7 +42,7 @@ class SimilarityHardExplainer(BaseExplainer):
             return {}
 
         token = identify_result.token
-        wn_pos = POSConverter().decode(token.pos_, POSConverter.SPACY_FORMAT).encode(POSConverter.WORDNET_FORMAT)
+        wn_pos = POSConverter2.convert(token.pos_, POSConverter2.SPACY_FORMAT, POSConverter2.WORDNET_FORMAT)
         synsets = wn.synsets(token.lemma_, pos=wn_pos)
         if len(synsets) == 0:
             return {}

@@ -30,7 +30,7 @@ if __name__ == '__main__':
     ret = 0
     if args.backend:
         ret = run_command(
-            ['waitress-serve', '--host=0.0.0.0', '--port=5000', '--threads=1', 'backend.app:app'],
+            ['waitress-serve', '--host=0.0.0.0', '--port=5000', '--threads=4', 'backend.app:app'],
             cwd='./'
         )
     elif args.frontend_test:
