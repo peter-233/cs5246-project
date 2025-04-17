@@ -1,6 +1,7 @@
 <template>
   <div class="wrapper">
-    <n-spin :show="isLoading" style="height: 100%; width: 100%;" id="TextLabelView_Spin_0" size="large">
+    <n-spin :show="isLoading || isImportingArticle" style="height: 100%; width: 100%;" id="TextLabelView_Spin_0"
+            size="large">
       <n-split direction="horizontal" style="height: 100%" :max="0.75" :min="0.5" :default-size="0.75">
         <template #1>
           <div class="textareaLayout">
@@ -45,13 +46,18 @@
                   preview-disabled
               />
             </n-flex>
-            <n-flex vertical justify="center" align="center">
-              <n-button type="primary" style="width: 200px; height: 50px;" @click="switchMode">
+            <n-flex justify="center" align="center">
+              <n-button type="primary" style="width: 150px; height: 50px;" @click="switchMode">
                 <div v-if="isInputMode" class="btnClass">
                   Go Render
                 </div>
                 <div v-if="!isInputMode" class="btnClass">
                   Go Edit
+                </div>
+              </n-button>
+              <n-button type="primary" style="width: 200px; height: 50px;" @click="switchImportModal">
+                <div class="btnClass">
+                  Import Article
                 </div>
               </n-button>
             </n-flex>
@@ -76,17 +82,39 @@
           </div>
         </template>
       </n-split>
+      <n-modal v-model:show="showImportModal">
+        <n-card title="Import Article From URL" style="width: 50%; height: 50%;">
+          <n-form
+              ref="importFormRef"
+              :model="importFormValue"
+              :rules="importFormRules"
+              size="large"
+          >
+            <n-form-item label="URL" path="importUrl">
+              <n-input v-model:value="importFormValue.importUrl" placeholder="please input your import article's url."/>
+            </n-form-item>
+            <n-flex justify="center" align="center">
+              <n-button type="primary" style="width: 150px; height: 50px;" @click="importArticle">
+                <div class="btnClass">
+                  import
+                </div>
+              </n-button>
+            </n-flex>
+          </n-form>
+        </n-card>
+      </n-modal>
     </n-spin>
   </div>
 </template>
 
 
 <script setup lang="ts">
-import {ref} from 'vue'
+import {type Ref, ref} from 'vue'
 import titlePic from '@/assets/anime_girl.png'
-import {getParseResults, getSummary} from '@/api/backend.ts'
+import {fetchArticle, getParseResults, getSummary} from '@/api/backend.ts'
 import type {ParseResult} from '@/api/backend.ts'
 import {useMessage} from "naive-ui";
+import type {FormInst} from 'naive-ui'
 import SingleTextSnippet from "@/components/SingleTextSnippet.vue";
 
 // noinspection TypeScriptUnresolvedReference
@@ -112,6 +140,7 @@ function reset() {
   renderedParseResults.value = []
   summary.value = ''
 }
+
 async function getRenderedText() {
   isLoading.value = true
   reset()
@@ -160,6 +189,49 @@ async function getRenderedText() {
   summary.value = summaryRespText
 
   isLoading.value = false
+}
+
+const showImportModal = ref(false)
+const importFormRef: Ref<FormInst | null> = ref<FormInst | null>(null)
+const importFormValue = ref({
+  importUrl: '',
+})
+const importFormRules = {
+  importUrl: {
+    required: true,
+    message: 'please input a valid URL',
+    trigger: 'blur',
+    type: 'url',
+  }
+}
+const isImportingArticle = ref(false)
+
+function switchImportModal() {
+  showImportModal.value = !showImportModal.value
+}
+
+async function importArticle(e: MouseEvent) {
+  e.preventDefault()
+  try {
+    await importFormRef.value?.validate()
+  } catch (err) {
+    console.log(e)
+    return;
+  }
+
+  isImportingArticle.value = true
+  const url = importFormValue.value.importUrl
+  const fetchedArticle = await fetchArticle(url)
+  if (!fetchedArticle) {
+    _window.$message.error(`Failed to fetch article: ${url}`)
+    isImportingArticle.value = false
+    return;
+  }
+
+  article.value = fetchedArticle
+  isInputMode.value = true
+  showImportModal.value = false
+  isImportingArticle.value = false
 }
 
 </script>

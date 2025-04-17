@@ -5,9 +5,11 @@ import TextLabelView from "./views/TextLabelView.vue";
 
 <template>
   <n-message-provider>
-    <div class="wrapper">
-      <TextLabelView/>
-    </div>
+    <n-dialog-provider>
+      <div class="wrapper">
+        <TextLabelView/>
+      </div>
+    </n-dialog-provider>
   </n-message-provider>
 </template>
 

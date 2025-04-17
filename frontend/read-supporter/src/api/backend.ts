@@ -68,4 +68,27 @@ export async function getSummary(text: string) {
 
 }
 
+export async function fetchArticle(url: string) {
+    const resp = await axiosIns.get("/api/fetch-article",
+        {
+            params: {
+                url: url
+            }
+        }
+    )
+
+    if (resp.status !== 200) {
+        handleMessage("error", `网络请求请求失败, code=${resp.status}`)
+        return;
+    }
+
+    const result = resp.data as Result
+    handleMessage(result.type, result.msg)
+    if (result.code !== 200) {
+        return;
+    }
+
+    return result.data.article as string
+}
+
 

@@ -128,3 +128,14 @@ def extract_sentence_by_word_position(article: str, start_pos: int, end_pos: int
         sentence_end += 1
 
     return sentence_start, sentence_end
+
+
+def fetch_article(url: str) -> str:
+    """
+    fetch the article from the given url
+    Args:
+        url: the target url
+    Returns:
+        the article text
+    """
+    return ""
