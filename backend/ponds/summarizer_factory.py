@@ -3,20 +3,30 @@ from typing import Any
 
 from pond import PooledObjectFactory, PooledObject
 
-from supporter.summarizer.base_summarizer import BaseSummarizer
-from supporter.summarizer.lda_summarizer import LDASummarizer
+from supporter.summarizer import LDASummarizer, LSASummarizer, BartSummarizer, TextRankSummarizer
 
 
 @dataclasses.dataclass
 class Summarizer:
-    summarizer: BaseSummarizer
+    lda_summarizer: LDASummarizer
+    textrank_summarizer: TextRankSummarizer
+    lsa_summarizer: LSASummarizer
+    bart_summarizer: BartSummarizer
 
 
 class SummarizerFactory(PooledObjectFactory):
 
     def createInstance(self) -> PooledObject:
-        core_summarizer = LDASummarizer()
-        summarizer = Summarizer(core_summarizer)
+        lda_summarizer = LDASummarizer()
+        textrank_summarizer = TextRankSummarizer()
+        lsa_summarizer = LSASummarizer()
+        bart_summarizer = BartSummarizer()
+        summarizer = Summarizer(
+            lda_summarizer,
+            textrank_summarizer,
+            lsa_summarizer,
+            bart_summarizer
+        )
         return PooledObject(summarizer)
 
     def destroy(self, pooled_object: PooledObject) -> None:

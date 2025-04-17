@@ -1,11 +1,14 @@
 from __future__ import annotations
-
+import re
 import nltk
+import requests
+from bs4 import BeautifulSoup
 from nltk.corpus import wordnet as wn
 
 RESOURCE_DATA_ROOT = "resources/data"
 nltk.download('wordnet', download_dir=RESOURCE_DATA_ROOT)
 nltk.data.path.append(RESOURCE_DATA_ROOT)
+
 
 class POSConverter2:
     NLTK_FORMAT = 1
@@ -74,96 +77,6 @@ class POSConverter2:
             raise ValueError(f"Invalid format: {dst_fmt}")
         return pos_ret
 
-# @deprecated("Use POSConverter2 instead.")
-# class POSConverter:
-#     NLTK_FORMAT = 1
-#     SPACY_FORMAT = 2
-#     WORDNET_FORMAT = 3
-#     COCA_FORMAT = 4
-#
-#     def __init__(self):
-#         self.pos = None
-#
-#         self.NLTK_ENCODE_MAP = {
-#             "NOUN": "n",
-#             "VERB": "v",
-#             "ADJ": "a",
-#             "ADV": "r",
-#             "ADJ_SAT": "s"
-#         }
-#         self.NLTK_DECODE_MAP = {v: k for k, v in self.NLTK_ENCODE_MAP.items()}
-#
-#         self.SPACY_ENCODE_MAP = {
-#             "NOUN": "NOUN",
-#             "VERB": "VERB",
-#             "ADJ": "ADJ",
-#             "ADV": "ADV",
-#             "ADJ_SAT": "ADJ",
-#         }
-#         self.SPACY_DECODE_MAP = {v: k for k, v in self.SPACY_ENCODE_MAP.items() if k != "ADJ_SAT"}
-#
-#         self.WORDNET_ENCODE_MAP = {
-#             "NOUN": wn.NOUN,
-#             "VERB": wn.VERB,
-#             "ADJ": wn.ADJ,
-#             "ADV": wn.ADV,
-#             "ADJ_SAT": wn.ADJ_SAT,
-#         }
-#         self.WORDNET_DECODE_MAP = {v: k for k, v in self.WORDNET_ENCODE_MAP.items()}
-#
-#         self.COCA_ENCODE_MAP = {
-#             "NOUN": "N",
-#             "VERB": "V",
-#             "ADJ": "J",
-#             "ADV": "R",
-#         }
-#         self.COCA_DECODE_MAP = {v: k for k, v in self.COCA_ENCODE_MAP.items()}
-#
-#     def encode(self, format: int):
-#         """
-#         encode(i.e. map) the POS value inside the class to the target format
-#
-#         Args:
-#             format: target POS format
-#
-#         Returns:
-#             target format's POS value
-#
-#         """
-#         if format == POSConverter.NLTK_FORMAT:
-#             return self.NLTK_ENCODE_MAP[self.pos]
-#         elif format == POSConverter.SPACY_FORMAT:
-#             return self.SPACY_ENCODE_MAP[self.pos]
-#         elif format == POSConverter.WORDNET_FORMAT:
-#             return self.WORDNET_ENCODE_MAP[self.pos]
-#         elif format == POSConverter.COCA_FORMAT:
-#             return self.COCA_ENCODE_MAP[self.pos]
-#         else:
-#             raise ValueError(f"Invalid format: {format}")
-#
-#     def decode(self, pos: str, format: int) -> POSConverter:
-#         """
-#         decode(i.e. map) the POS value from the target format to the class value
-#
-#         Args:
-#             pos: POS value
-#             format: the given format
-#
-#         Returns:
-#             self, which can be immediately used to encode() call
-#         """
-#         if format == POSConverter.NLTK_FORMAT:
-#             self.pos = self.NLTK_DECODE_MAP[pos]
-#         elif format == POSConverter.SPACY_FORMAT:
-#             self.pos = self.SPACY_DECODE_MAP[pos]
-#         elif format == POSConverter.WORDNET_FORMAT:
-#             self.pos = self.WORDNET_DECODE_MAP[pos]
-#         elif format == POSConverter.COCA_FORMAT:
-#             self.pos = self.COCA_DECODE_MAP[pos]
-#         else:
-#             raise ValueError(f"Invalid format: {format}")
-#         return self
-
 
 def extract_sentence_by_word_position(article: str, start_pos: int, end_pos: int) -> tuple[int, int]:
     """
@@ -210,4 +123,84 @@ def fetch_article(url: str) -> str:
     Returns:
         the article text
     """
-    return ""
+
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0'}  # Be polite
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()  # Raise an exception for bad status codes
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # --- CNA Specific Extraction ---
+
+        # --- Part 1: Extract Title ---
+        title_tag = soup.find('h1', class_='h1--page-title')
+        title = title_tag.get_text(strip=True) if title_tag else "Title not found"
+        # --- End Part 1 ---
+
+        # --- Part 2: Extract Subtitle ---
+        subtitle_div = soup.find('div', class_='content-detail__description')
+        # Check if the div exists and contains a <p> tag
+        subtitle = subtitle_div.find('p').get_text(strip=True) if subtitle_div and subtitle_div.find(
+            'p') else "Subtitle not found"
+        # --- End Part 2 ---
+
+        # --- Part 3: Extract Main Body ---
+        # Find the main content area which seems to contain the relevant text blocks
+        main_content_section = soup.find('section', class_='block-field-blocknodearticlefield-content')
+
+        paragraphs_text = []
+        if main_content_section:
+            # Find all 'text-long' divs within that section
+            text_long_divs = main_content_section.find_all('div', class_='text-long')
+            for div in text_long_divs:
+                # Extract text primarily from <p> tags within text-long divs
+                p_tags = div.find_all('p')
+                for p in p_tags:
+                    paragraph = p.get_text(strip=True)
+                    # Basic filtering (optional): remove very short paragraphs or specific unwanted text
+                    if paragraph and len(
+                            paragraph) > 10 and "audio is generated by an AI tool" not in paragraph.lower():
+                        paragraphs_text.append(paragraph)
+                # Include text from bullet points <ul><li> if any exist directly under text-long
+                ul_tags = div.find_all('ul', recursive=False)  # Find direct children <ul>
+                for ul in ul_tags:
+                    list_items = ul.find_all('li')
+                    for li in list_items:
+                        item_text = li.get_text(strip=True)
+                        if item_text:
+                            paragraphs_text.append(f"- {item_text}")  # Add bullet point marker
+
+        if not paragraphs_text:
+            print(
+                f"Warning: Could not extract text using CNA selectors for {url}. Falling back to generic <p> tag search.")
+            # Fallback to generic <p> search if specific selectors fail
+            paragraphs = soup.find_all('p')
+            paragraphs_text = [p.get_text(strip=True) for p in paragraphs if
+                               p.get_text(strip=True) and len(p.get_text(strip=True)) > 20]  # Basic length filter
+
+        full_text = "\n\n".join(paragraphs_text)
+
+        # Clean up extra whitespace that might result from joining
+        full_text = re.sub(r'\n{3,}', '\n\n', full_text).strip()
+
+        if not full_text:
+            print(f"Warning: Could not extract significant text content for {url}")
+        # --- End Part 3 ---
+
+        # --- Part 4: Structure Return Dictionary ---
+        article_data = {
+            'title': title,
+            'subtitle': subtitle,
+            'body': full_text  # Including body in the example dict structure
+        }
+        # --- End Part 4 ---
+
+        return article_data['body']
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching URL {url}: {e}")
+        raise e
+    except Exception as e:
+        print(f"Error parsing HTML from {url}: {e}")
+        raise e

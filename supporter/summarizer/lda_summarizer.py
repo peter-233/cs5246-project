@@ -93,7 +93,7 @@ class LDASummarizer(BaseSummarizer):
 
         # Apply LDA model
         lda_model = models.LdaModel(corpus, num_topics=num_topics, id2word=dictionary)
-        print(f"\nLDA Topics (for article length {article_length}, num_topics={num_topics}):", lda_model.print_topics())
+        # print(f"\nLDA Topics (for article length {article_length}, num_topics={num_topics}):", lda_model.print_topics())
 
         # Get topic distribution for each sentence
         sentence_topic_vectors = []

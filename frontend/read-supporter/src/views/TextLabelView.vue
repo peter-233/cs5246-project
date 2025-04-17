@@ -39,12 +39,15 @@
         <template #2>
           <div class="gridLayout">
             <n-flex justify="center" align="center">
-              <n-image
-                  width="200"
-                  height="200"
-                  :src="titlePic"
-                  preview-disabled
-              />
+              <n-dropdown trigger="click" size="large" :options="summaryOptions" @select="onSelectSummaryOption"
+                          :show-arrow="true">
+                <n-image
+                    width="200"
+                    height="200"
+                    :src="titlePic"
+                    preview-disabled
+                />
+              </n-dropdown>
             </n-flex>
             <n-flex justify="center" align="center">
               <n-button type="primary" style="width: 150px; height: 50px;" @click="switchMode">
@@ -109,15 +112,15 @@
 
 
 <script setup lang="ts">
-import {type Ref, ref} from 'vue'
+import {type Ref, ref, h, type Component} from 'vue'
 import titlePic from '@/assets/anime_girl.png'
 import {fetchArticle, getParseResults, getSummary} from '@/api/backend.ts'
 import type {ParseResult} from '@/api/backend.ts'
-import {useMessage} from "naive-ui";
+import {useMessage, NIcon} from "naive-ui";
 import type {FormInst} from 'naive-ui'
 import SingleTextSnippet from "@/components/SingleTextSnippet.vue";
+import {Checkmark} from '@vicons/ionicons5'
 
-// noinspection TypeScriptUnresolvedReference
 const _window = window as any
 _window.$message = useMessage()
 
@@ -149,7 +152,7 @@ async function getRenderedText() {
   try {
     [parseResults, summaryRespText] = await Promise.all([
       getParseResults(article.value),
-      getSummary(article.value)
+      getSummary(article.value, summaryOption.value)
     ]);
   } catch (e) {
     _window.$message.error(`Failed to get parse results: ${e}`)
@@ -159,6 +162,7 @@ async function getRenderedText() {
   }
 
   if (!parseResults || !summaryRespText) {
+    isLoading.value = false
     return;
   }
 
@@ -232,6 +236,46 @@ async function importArticle(e: MouseEvent) {
   isInputMode.value = true
   showImportModal.value = false
   isImportingArticle.value = false
+}
+
+const summaryOption = ref('lda')
+const summaryOptions = [
+  {
+    label: 'Summarize With Bart',
+    key: 'bart',
+    icon: renderIcon(Checkmark, 'bart'),
+  },
+  {
+    label: 'Summarize With LDA',
+    key: 'lda',
+    icon: renderIcon(Checkmark, 'lda'),
+  },
+  {
+    label: 'Summarize With LSA',
+    key: 'lsa',
+    icon: renderIcon(Checkmark, 'lsa'),
+  },
+  {
+    label: 'Summarize With Textrank',
+    key: 'textrank',
+    icon: renderIcon(Checkmark, 'textrank'),
+  }
+]
+
+function renderIcon(icon: Component, key: string) {
+  return () => {
+    return h(NIcon,
+        {
+          color: key === summaryOption.value ? "rgba(41, 198, 41, 1)" : "rgba(0, 255, 0, 0)",
+          size: "large",
+        }, {
+          default: () => h(icon)
+        })
+  }
+}
+
+function onSelectSummaryOption(key: string) {
+  summaryOption.value = key
 }
 
 </script>

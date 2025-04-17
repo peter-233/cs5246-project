@@ -46,10 +46,11 @@ export async function getParseResults(text: string) {
 
 }
 
-export async function getSummary(text: string) {
+export async function getSummary(text: string, method: string) {
     const resp = await axiosIns.post("/api/summary",
         {
-            text: text
+            text: text,
+            method: method
         }
     )
 

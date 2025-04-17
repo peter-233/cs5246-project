@@ -1,3 +1,8 @@
+import dataclasses
+import json
+
+from flask import Response
+
 from backend.models.explain_vo import ExplainVo
 from backend.models.parse_result_vo import ParseResultVo
 from backend.models.result_vo import ResultVo, ResultType, ResultCodeEnum
@@ -15,3 +20,9 @@ def identify_explains_to_result(identify_explains: list[tuple[IdentifyResult, di
 
     result_vo = ResultVo(ResultType.SUCCESS, parse_result_vo_list, rce=ResultCodeEnum.SUCCESS)
     return result_vo
+
+def generate_internal_error_response(err: any) -> Response:
+    result_vo = ResultVo(ResultType.ERROR, str(err), rce=ResultCodeEnum.ERROR)
+    result_vo_json = json.dumps(dataclasses.asdict(result_vo))
+    return Response(result_vo_json, mimetype='application/json')
+
